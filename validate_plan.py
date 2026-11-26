@@ -273,6 +273,28 @@ def main():
         if len(ids) > 1:
             fail(f"output '{out}' claimed by tasks {ids}; outputs must be unique to one task (D6)")
 
+    # ---- rule 10: producer-directive pins (plan v1.1.0, 2026-11-26) --------
+    # The producer's four inputs are requirements, not preferences: engine pin,
+    # mobile-first platforms, data-driven mandate, and the two verified
+    # simulation weaknesses must stay represented in the plan (D21-D24).
+    check("4.7.2" in str(ts.get("choice", "")),
+          "tech_stack.choice must pin Godot 4.7.2 (producer directive, D24)")
+    cons_text = " ".join(str(c) for c in ts.get("constraints", []))
+    check("iOS" in cons_text and "Android" in cons_text,
+          "tech_stack.constraints must name the mobile-first platforms (iOS and Android, D14)")
+    dids = {d.get("id") for d in plan["decisions_log"]}
+    for did in ("D21", "D22", "D23", "D24"):
+        check(did in dids, f"decisions_log missing producer-directive entry {did}")
+    tids = {t["id"] for t in tasks}
+    for tid in ("M7-T9", "M7-T10"):
+        check(tid in tids, f"plan missing producer-directive task {tid}")
+    m7_tids = set(next(m for m in plan["milestones"] if m["id"] == "M7").get("task_ids", []))
+    for tid in ("M7-T9", "M7-T10"):
+        check(tid in m7_tids, f"milestone M7 task_ids missing {tid}")
+    blob = " ".join((t.get("title", "") + " " + t.get("summary", "")) for t in tasks)
+    check("Android" in blob and "iOS" in blob,
+          "plan must contain Android and iOS export/publish tasks (mobile-first, D14)")
+
     report()
     sys.exit(1 if failures else 0)
 

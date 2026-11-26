@@ -13,6 +13,98 @@ zero human-approval tasks, and a 20-day parity claim that was impossible at M0.
 
 ---
 
+## Revision 2 (2026-11-26) — producer inputs incorporated
+
+The producer reviewed plan v1.0.0 and returned four inputs: two weaknesses found in the
+locked simulation, an engine pin (Godot 4.7.2), a platform decision (mobile-first:
+iOS & Android, desktop later), and an architecture mandate (data-driven: no hardcoded
+data in Godot, everything from JSON). Every claim was re-verified against the design
+files before being logged; the plan is now v1.1.0 with decisions D21–D24, tasks
+M7-T9/M7-T10, risks R11–R14, principles +2, and a new validator rule 10 that fails if
+any of the four directives silently regresses.
+
+### Producer finding 1 — the graph is too small for the thresholds to matter (VERIFIED)
+
+Re-measured, not copied. Across 200 seeded cities (6,000 people, `sim.py
+generate_city`) the degree histogram is 2: 3,975, 3: 1,705, 4: 284, 5: 33, 6: 3 —
+**66.2% of people have exactly 2 neighbors** (ring within district + 6 cross-district
+pairs, sim.py lines 122–134). With two ordinary (weight-1) neighbors the only
+achievable `greedy_frac` values are 0, 0.5, 1.0. Contagion thresholds
+(`game_model.json → contagion.thresholds`) are fear 0.60, pride 0.50, envy 0.35, so:
+
+- pride and envy tip on the **identical fraction set {0.5, 1.0}** for degree-2 people —
+  they are indistinguishable for two-thirds of the population;
+- fear requires frac = 1.0 (both neighbors greedy), which does work;
+- "envy tips first" — the 0.35 ≤ frac < 0.50 band where envy tips and pride does not —
+  requires a hub neighbor (weight 2.0 in `contagion_pass`) or degree ≥ 4, i.e. it can
+  only show up around hubs or people with extra ties. Exact match with the producer's
+  finding.
+
+Design is LOCKED → no redesign. Patched as **D22**: the behavior is pinned by the
+existing parity goldens (M2-T12), measured by the new **M7-T9** topology report
+(degree histogram + per-threshold tip rates per degree class + channel-coupling
+metrics), and recorded in-repo by `docs/sim_behavior_notes.md` (owned by M7-T9). The
+audit also added a do-not-fix failure mode to M2-T1: a well-meaning porting agent must
+not "improve" the pride/envy equivalence — parity with sim.py is the goal. Any
+threshold/degree retune is a post-1.0 design change requiring owner sign-off + golden
+regeneration (open assumption).
+
+### Producer finding 2 — only one channel uses the graph (VERIFIED)
+
+Confirmed in code, not prose: `gossip_pass` (sim.py ~line 415) picks seeded random
+targets with a **70% same-district bias** and never reads neighbor lists; market prices
+act on Market Square or all districts (`game_model.json → market.price_reasons`);
+only `contagion_pass` iterates neighbor lists. The social graph carries exactly one of
+the three channels — consistent with the GDD's three-channel design, but "graph-based"
+oversells it. Patched as **D23**: M7-T9 quantifies channel-vs-topology coupling (% of
+gossip targets that are graph neighbors; price reasons reaching non-adjacent people);
+`gossip-along-edges` and `price-locality` are logged as post-1.0 design-change
+requests; M2-T2 gained a do-not-reroute failure mode.
+
+### Producer directives — engine, platforms, architecture
+
+- **Godot 4.7.2** (D24): the 4.3 pin is superseded *before execution starts* — the
+  cheapest possible moment. Parity is machine-anchored (W1), so M0-T2 re-pins the CI
+  binary URL + sha256, and M0-T3/M0-T6 regenerate the RNG known-answer vectors and
+  city goldens **on the 4.7.2 toolchain** before any ported code exists to debug.
+  Validator rule 10 now fails if the pin regresses. Residual risk tracked as R14.
+- **Mobile-first (iOS + Android), desktop later** (D14 rewritten; supersedes GDD 1.3's
+  PC lock per planning rule 11): M8 was reworked — M8-T1 produces five export presets
+  (Android arm64-v8a + armeabi-v7a, iOS, and Win/Linux/macOS kept building but
+  release-deferred), M8-T2's release CI ships AAB/APK/IPA artifacts with a
+  debug-keystore/human-signing split, M8-T6 adds a static APK check (with an aapt2
+  degradation path), M8-T7 becomes Google Play + App Store submission (human), and the
+  M8 gate's human playtests moved onto devices. Touch was already the primary input
+  model (tap/click, M1-T6), so no earlier milestone churns. New risk: R13.
+- **Data-driven mandate** (D21, extends D7): every design number, roster, dialogue
+  tag, palette band, audio rule and store copy loads from JSON at runtime. New
+  **M7-T10** adds `tools/check_data_driven.py --strict` (fails CI on content literals
+  in .gd outside the engine-constants whitelist; the literal blacklist is itself built
+  from game_model.json + game/data JSONs at runtime — the lint is data-driven too),
+  and the check joined the M7 exit gate.
+
+### Audit findings from re-simulating the changed tasks (all patched)
+
+- **F1 (the dangerous one):** M2-T1/M2-T2 porting agents could treat the two
+  producer-found behaviors as bugs and "fix" them, silently breaking parity →
+  do-not-fix failure modes added (D22/D23 are facts to reproduce, not defects).
+- **F2:** M7-T9's `--check` needs its golden to exist first → `--update-golden`
+  first-run named in DoD (same fix pattern as M0-T4's model_sha.txt in revision 1).
+- **F3:** "+/- 2pp of 66.2% on 24 seeds" is a sampling-noise trap (sd ≈ 1.76pp) →
+  CI gate is now the deterministic 24-seed golden only; the 200-seed reference run
+  (66.2% ± 1pp) is documented, not a gate. The current 24-seed share is 66.0%.
+- **F4:** M7-T10's selftest fixture ownership and the runtime-built literal blacklist
+  were underspecified → DoD lines added.
+- **F5:** CI cannot release-sign Android/iOS without human-held keys → debug-keystore
+  (CI) / release-signing (human) split documented in M8-T2, consumed by M8-T7.
+- **F6:** M8-T6's APK versionName check needs aapt2 → build-tools installed by the
+  release job; explicit degradation path when absent (exit 0 with a SKIPPED line).
+
+Plan size after revision 2: **95 tasks (18 S / 77 M / 0 L)**, 9 milestones, 24
+decisions, 14 risks; critical path recomputed by validate_plan.py (unchanged at 31).
+
+---
+
 ## Part 1 — first 10 tasks: where I got stuck, guessed, or failed
 
 ### M0-T1 (repo scaffold)
@@ -115,6 +207,14 @@ zero human-approval tasks, and a 20-day parity claim that was impossible at M0.
 
 ## Part 2 — remaining weaknesses (ranked by impact)
 
+Revision-1 numbering (W1–W7) is preserved so cross-references in decisions_log stay
+valid. Revision 2 appends W8–W10 below and promotes two producer-verified facts above
+the ranking: the threshold-vs-graph coarseness (D22, R11) and the single-graph-channel
+reality (D23, R12) are the two highest-visibility weaknesses in the project — fully
+measured, documented in docs/sim_behavior_notes.md via M7-T9, and deliberately NOT
+redesigned while the design is locked. They rank first in impact and last in
+actionability; everything below is ranked after them.
+
 ### W1 — Float parity is machine-anchored, not math-anchored (HIGH)
 `rng.gauss` calls `log/cos/sin` from libm. GDScript on the same Linux image calls the same
 glibc, so pinned goldens reproduce — but a new CI image, a Godot upgrade that bundles a
@@ -166,6 +266,32 @@ If someone changes `game_model.json`, the checksum gate forces the conversation 
 tool can force the *right* conversation (regen goldens + balance report + test owner
 sign-off). The AGENT_GUIDE documents the procedure; enforcement is review discipline.
 **Residual:** accepted; R7 covers the detection half.
+
+### W8 — Mobile is now the ship platform, and its gates are human-held (MEDIUM-HIGH, new in revision 2)
+Android/iOS bring failure surfaces the revision-1 plan never had: mid-range devices
+must hold the frame budget (M7-T3's CI numbers are a proxy, not the device), the App
+Store/Play review can reject builds late in M8, and signing/provisioning is human-only
+by definition (M8-T2 F5 split, M8-T7). The desktop fallback still builds, but "ship"
+now means passing gates no CI can automate. **Mitigation:** budgets calibrated to a
+mid-range Android reference device from M1; static APK check with aapt2 degradation
+(F6); device smoke before submission. **Residual:** store-review timing is
+uncontrollable; R13 tracks it.
+
+### W9 — The 4.7.2 bump re-anchors every machine-anchored promise (LOW residual, new in revision 2)
+The engine pin moved 4.3 → 4.7.2 before execution, which is the cheapest moment — but
+W1's mechanism applies: RNG known-answer vectors and city goldens must be regenerated
+ON the 4.7.2 toolchain (M0-T3/M0-T6), and if the VM ever changes float semantics in a
+later 4.x, the same re-anchoring repeats. Because no ported code exists yet, the bump
+costs hours, not weeks. **Residual:** accepted; R14 tracks it; rule 10 pins the
+version so it cannot drift silently.
+
+### W10 — The data-driven lint fights its own false-positive rate (LOW, new in revision 2)
+M7-T10 must flag content literals (thresholds, deltas, names, hex codes) without
+drowning agents in layout-math false positives. The whitelist + runtime-built
+blacklist (F4) keeps it precise, but a lint that is too strict gets bypassed with
+generic "data-driven: ok" comments, and one that is too loose becomes theater. The
+selftest pins both directions. **Residual:** accepted; the M7 gate runs --strict so
+erosion is visible.
 
 ---
 
