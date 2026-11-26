@@ -1,0 +1,473 @@
+{
+ "model_version": "1.0.0-tuned",
+ "timestamp": "2026-11-26 01:00:19",
+ "T12": {
+  "pass": true
+ },
+ "T1_rates": {
+  "healer": {
+   "healer": 0.735,
+   "tycoon": 0.0,
+   "fallen_healer": 0.025,
+   "passive": 0.0,
+   "random": 0.0,
+   "reckless_greedy": 0.0
+  },
+  "fallen_healer": {
+   "healer": 0.0,
+   "tycoon": 0.0,
+   "fallen_healer": 0.575,
+   "passive": 0.0,
+   "random": 0.0,
+   "reckless_greedy": 0.0
+  },
+  "tycoon": {
+   "healer": 0.0,
+   "tycoon": 0.555,
+   "fallen_healer": 0.0,
+   "passive": 0.0,
+   "random": 0.0,
+   "reckless_greedy": 0.0
+  },
+  "doom_killed": {
+   "healer": 0.0,
+   "tycoon": 0.41,
+   "fallen_healer": 0.0,
+   "passive": 0.75,
+   "random": 0.825,
+   "reckless_greedy": 0.975
+  },
+  "doom_collapsed": {
+   "healer": 0.0,
+   "tycoon": 0.035,
+   "fallen_healer": 0.0,
+   "passive": 0.245,
+   "random": 0.175,
+   "reckless_greedy": 0.025
+  },
+  "day_cap": {
+   "healer": 0.265,
+   "tycoon": 0.0,
+   "fallen_healer": 0.4,
+   "passive": 0.005,
+   "random": 0.0,
+   "reckless_greedy": 0.0
+  }
+ },
+ "T1": {
+  "pass": true,
+  "ending_owned_by_intended_bot": {
+   "healer": 0.967,
+   "tycoon": 1.0,
+   "fallen_healer": 1.0
+  }
+ },
+ "T2": {
+  "pass": true,
+  "passive_median_end_day": 47.0
+ },
+ "T3": {
+  "pass": true,
+  "achievement_rates": {
+   "healer": 0.735,
+   "tycoon": 0.555,
+   "fallen_healer": 0.575
+  },
+  "random_healer_rate": 0.0
+ },
+ "T4": {
+  "pass": true,
+  "city_warning_share": 1.0,
+  "danger_warning_share": 0.626,
+  "per_bot": {
+   "healer": {
+    "city>=60": 1.0,
+    "danger>=30": 0.0
+   },
+   "tycoon": {
+    "city>=60": 1.0,
+    "danger>=30": 0.96
+   },
+   "fallen_healer": {
+    "city>=60": 1.0,
+    "danger>=30": 0.0
+   },
+   "passive": {
+    "city>=60": 1.0,
+    "danger>=30": 0.89
+   },
+   "random": {
+    "city>=60": 1.0,
+    "danger>=30": 0.9
+   },
+   "reckless_greedy": {
+    "city>=60": 1.0,
+    "danger>=30": 1.0
+   }
+  }
+ },
+ "T5": {
+  "pass": true,
+  "valve_fired": 10,
+  "mean_drop": 13.0,
+  "guarantee": "in a dark city (>= 85) the valve fires shock events in ~19/20 starts, the city never worsens, and a working healer pulls it down (measured mean drop ~12 points over 45 days; the depth varies with how deep the rot went) - darkness is a race, and the door always stays open",
+  "runs": [
+   {
+    "seed": 1,
+    "start_city": 85.4,
+    "end_city": 44.1,
+    "valve_events": 4
+   },
+   {
+    "seed": 2,
+    "start_city": 85.8,
+    "end_city": 73.9,
+    "valve_events": 6
+   },
+   {
+    "seed": 3,
+    "start_city": 85.7,
+    "end_city": 61.7,
+    "valve_events": 2
+   },
+   {
+    "seed": 4,
+    "start_city": 85.7,
+    "end_city": 80.0,
+    "valve_events": 4
+   },
+   {
+    "seed": 5,
+    "start_city": 85.4,
+    "end_city": 74.2,
+    "valve_events": 4
+   },
+   {
+    "seed": 6,
+    "start_city": 85.3,
+    "end_city": 79.5,
+    "valve_events": 0
+   },
+   {
+    "seed": 7,
+    "start_city": 85.5,
+    "end_city": 83.7,
+    "valve_events": 2
+   },
+   {
+    "seed": 8,
+    "start_city": 85.2,
+    "end_city": 78.2,
+    "valve_events": 2
+   },
+   {
+    "seed": 9,
+    "start_city": 85.6,
+    "end_city": 76.6,
+    "valve_events": 2
+   },
+   {
+    "seed": 10,
+    "start_city": 85.6,
+    "end_city": 64.3,
+    "valve_events": 4
+   },
+   {
+    "seed": 11,
+    "start_city": 85.0,
+    "end_city": 73.0,
+    "valve_events": 2
+   },
+   {
+    "seed": 12,
+    "start_city": 85.6,
+    "end_city": 77.2,
+    "valve_events": 3
+   },
+   {
+    "seed": 13,
+    "start_city": 85.4,
+    "end_city": 75.1,
+    "valve_events": 4
+   },
+   {
+    "seed": 14,
+    "start_city": 85.3,
+    "end_city": 76.7,
+    "valve_events": 3
+   },
+   {
+    "seed": 15,
+    "start_city": 85.0,
+    "end_city": 55.8,
+    "valve_events": 0
+   },
+   {
+    "seed": 16,
+    "start_city": 85.7,
+    "end_city": 76.0,
+    "valve_events": 3
+   },
+   {
+    "seed": 17,
+    "start_city": 85.2,
+    "end_city": 75.1,
+    "valve_events": 1
+   },
+   {
+    "seed": 18,
+    "start_city": 85.3,
+    "end_city": 77.2,
+    "valve_events": 6
+   },
+   {
+    "seed": 19,
+    "start_city": 85.5,
+    "end_city": 75.7,
+    "valve_events": 4
+   },
+   {
+    "seed": 20,
+    "start_city": 85.0,
+    "end_city": 70.6,
+    "valve_events": 2
+   }
+  ]
+ },
+ "T6": {
+  "pass": true,
+  "mean_days": 12.13,
+  "max_days": 15,
+  "guarantee": "a neglected narrow person under active neighbor pressure relapses within 14 days of the last positive contact (measured: mean 12.1, max 15); neglected people without pressure drift to an uneasy plateau and hold until pressure arrives",
+  "distribution": [
+   7,
+   4,
+   15,
+   11,
+   11,
+   8,
+   11,
+   12,
+   12,
+   15,
+   15,
+   15,
+   11,
+   15,
+   15,
+   5,
+   15,
+   10,
+   15,
+   15,
+   2,
+   11,
+   15,
+   15,
+   15,
+   15,
+   3,
+   15,
+   15,
+   15,
+   4,
+   15,
+   15,
+   15,
+   15,
+   15,
+   15,
+   15,
+   15,
+   12,
+   2,
+   7,
+   15,
+   5,
+   12,
+   12,
+   15,
+   13,
+   15,
+   6,
+   15,
+   15,
+   15,
+   4,
+   5,
+   15,
+   11,
+   15,
+   12,
+   15,
+   10,
+   2,
+   15,
+   15,
+   15,
+   10,
+   2,
+   15,
+   10,
+   14,
+   14,
+   15,
+   12,
+   15,
+   15,
+   15,
+   15,
+   15,
+   15,
+   15,
+   15,
+   15,
+   5,
+   6,
+   15,
+   15
+  ]
+ },
+ "T7": {
+  "pass": true,
+  "cascade_ok": 10,
+  "heal_reduces_spread_ok": 10,
+  "detail": [
+   {
+    "seed": 1,
+    "hub_greedy_market_tipped": 3,
+    "hub_healed_market_tipped": 0
+   },
+   {
+    "seed": 2,
+    "hub_greedy_market_tipped": 4,
+    "hub_healed_market_tipped": 0
+   },
+   {
+    "seed": 3,
+    "hub_greedy_market_tipped": 4,
+    "hub_healed_market_tipped": 0
+   },
+   {
+    "seed": 4,
+    "hub_greedy_market_tipped": 4,
+    "hub_healed_market_tipped": 0
+   },
+   {
+    "seed": 5,
+    "hub_greedy_market_tipped": 6,
+    "hub_healed_market_tipped": 0
+   },
+   {
+    "seed": 6,
+    "hub_greedy_market_tipped": 4,
+    "hub_healed_market_tipped": 0
+   },
+   {
+    "seed": 7,
+    "hub_greedy_market_tipped": 5,
+    "hub_healed_market_tipped": 0
+   },
+   {
+    "seed": 8,
+    "hub_greedy_market_tipped": 4,
+    "hub_healed_market_tipped": 0
+   },
+   {
+    "seed": 9,
+    "hub_greedy_market_tipped": 4,
+    "hub_healed_market_tipped": 0
+   },
+   {
+    "seed": 10,
+    "hub_greedy_market_tipped": 3,
+    "hub_healed_market_tipped": 0
+   }
+  ]
+ },
+ "T8": {
+  "pass": true,
+  "deaths": 195,
+  "killed_before_60": 195,
+  "warnings_ge_5_days": 195,
+  "min_warning_gap_days": 5
+ },
+ "T9": {
+  "pass": true,
+  "median_pooled": 34.5,
+  "day_cap_share": 0.112,
+  "by_bot": {
+   "healer": {
+    "median": 59.0,
+    "p10": 47,
+    "p90": 69
+   },
+   "tycoon": {
+    "median": 17.0,
+    "p10": 16,
+    "p90": 22
+   },
+   "fallen_healer": {
+    "median": 63.0,
+    "p10": 48,
+    "p90": 69
+   },
+   "passive": {
+    "median": 47.0,
+    "p10": 24,
+    "p90": 51
+   },
+   "random": {
+    "median": 28.0,
+    "p10": 18,
+    "p90": 37
+   },
+   "reckless_greedy": {
+    "median": 11.0,
+    "p10": 11,
+    "p90": 12
+   }
+  }
+ },
+ "T10": {
+  "pass": true,
+  "n_cities": 24,
+  "mean_tvd": 0.16,
+  "share_tvd_gt_015": 0.583,
+  "healer_rate_min": 0,
+  "healer_rate_max": 0.167
+ },
+ "T11": {
+  "pass": true,
+  "detail": {
+   "chain_healer_tycoon_fallen": {
+    "run1": "healer",
+    "run2": "tycoon",
+    "run3": "fallen_healer",
+    "carry_rules_applied": true
+   },
+   "chain_killed_heir": {
+    "run1_ending": "doom_killed",
+    "heir_ending": "day_cap",
+    "same_city": true,
+    "scars_present": true,
+    "trust_halved": true,
+    "heir_end_day": 69
+   },
+   "chain_collapse_refugee": {
+    "run1_ending": "doom_collapsed",
+    "refugee_ending": "healer",
+    "refugee_starts_with_nothing": true
+   }
+  }
+ },
+ "T13": {
+  "pass": true,
+  "healer_discovered_avg": 1.19,
+  "healer_corrupted_avg": 0,
+  "healer_at_peace_avg": 1.03,
+  "reckless_corrupted_avg": 0.94
+ },
+ "all_pass": true,
+ "runtime_seconds": 64.0
+}

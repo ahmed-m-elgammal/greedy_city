@@ -1,0 +1,1660 @@
+{
+ "meta": {
+  "title": "Small Wants",
+  "formerly": "Greedy City (working title in notes)",
+  "version": "1.0.0-tuned",
+  "source": "greedy_city_design_notes.md sections 1-19 LOCKED; 20 dispositioned; 21 decided",
+  "determinism": "All randomness derives from random.Random(seed). Same seed -> identical run. City generation uses rng key 'city-<gen_seed>'; run rng uses seed directly.",
+  "numbers_policy": "game_model.json is the single source of truth for all numbers. GDD.md must match it exactly."
+ },
+ "pillars": [
+  "Every trade and every word feeds a person's greed or heals it, and the cause is always visible to the player as a list of reasons.",
+  "Greed is contagious (prices, gossip, neighborhoods), and healing is never permanent.",
+  "The player is corrupted by greed too, and getting too rich gets the player killed.",
+  "The game feels endless: many different runs, not a 2-3 hour experience.",
+  "The simulation stays simple enough for a player to observe and understand."
+ ],
+ "clock": {
+  "day_cap": 68,
+  "actions_per_day": 4,
+  "tutorial_days": 2,
+  "tutorial_actions_per_day": 2,
+  "storyteller_event_chance_per_day": 0.6,
+  "notes": "Tutorial days 1-2 are the opening (2 actions/day). The ledger unlocks on day 3 at the shop."
+ },
+ "scales": {
+  "person_greed": {
+   "min": 0,
+   "max": 100
+  },
+  "person_trust": {
+   "min": 0,
+   "max": 100
+  },
+  "player_greed": {
+   "min": 0,
+   "max": 100
+  },
+  "danger": {
+   "min": 0,
+   "max": 100,
+   "visible": false
+  },
+  "city_greed": {
+   "min": 0,
+   "max": 100,
+   "visible": true
+  },
+  "market_heat": {
+   "min": 0,
+   "max": 100,
+   "visible": true
+  }
+ },
+ "state_bands": {
+  "narrow_max": 25,
+  "greedy_tip_by_type": {
+   "fear": 55,
+   "pride": 50,
+   "envy": 45
+  },
+  "tip_jitter": 6,
+  "city_cured": 20,
+  "city_warning": 60,
+  "city_valve": 85,
+  "city_collapse": 76,
+  "collapse_sustain_days": 8,
+  "healer_min_day": 12,
+  "player_greed_healer_max": 40,
+  "player_greed_fallen_min": 55,
+  "wealth_limit": 100,
+  "tycoon_wealth_target": 250,
+  "tycoon_danger_max": 40,
+  "danger_warnings": [
+   30,
+   50,
+   70,
+   90
+  ],
+  "danger_death": 100,
+  "trust_why_partial": 25,
+  "trust_why_full": 60,
+  "healer_min_trust": 30,
+  "narrow_base_floor": 15,
+  "peace_base_floor": 10
+ },
+ "greed_types": {
+  "fear": {
+   "meaning": "Hoarding to survive",
+   "cure": "Make them feel secure: steady supply and fair prices",
+   "tip": 55,
+   "contagion_threshold": 0.6,
+   "deal_reaction": {
+    "generous": 1.2,
+    "fair": 1.2,
+    "tilted": 1.1,
+    "exploitative": 1.2
+   },
+   "word_reaction": {
+    "honest": 1.0,
+    "kind": 0.8,
+    "flattering": 0.6,
+    "threatening": 1.2
+   },
+   "special": "Fair/generous GOODS deals add 'Steady supply' -7 (4d). Debt reasons weigh x1.5. Hungry/Shortage reasons weigh x1.3.",
+   "district": "Docks (plus some Counting House residents)"
+  },
+  "pride": {
+   "meaning": "Status",
+   "cure": "Honest, humble dealing that does not feed their status",
+   "tip": 50,
+   "contagion_threshold": 0.5,
+   "deal_reaction": {
+    "generous": 0.8,
+    "fair": 1.0,
+    "tilted": 1.0,
+    "exploitative": 0.9
+   },
+   "word_reaction": {
+    "honest": 1.2,
+    "kind": 1.2,
+    "flattering": 1.8,
+    "threatening": 1.0
+   },
+   "special": "Flattery is the fastest corrupter (x1.8); humble honest words heal best.",
+   "district": "The Hill (plus most of the Counting House)"
+  },
+  "envy": {
+   "meaning": "Copying neighbors",
+   "cure": "Fix the hub they are copying",
+   "tip": 45,
+   "contagion_threshold": 0.35,
+   "deal_reaction": {
+    "generous": 1.0,
+    "fair": 1.0,
+    "tilted": 1.0,
+    "exploitative": 1.0
+   },
+   "word_reaction": {
+    "honest": 1.0,
+    "kind": 1.0,
+    "flattering": 1.0,
+    "threatening": 1.0
+   },
+   "special": "Lowest contagion threshold: tips first from neighbors, hubs and rumors; heals fastest when its hub falls in line.",
+   "district": "Market Square and Tavern Row"
+  }
+ },
+ "trade": {
+  "fair_price_rule": "fair_price = item base price (goods 10, favor 8, secret 15, time 5), modified by market heat: x(1 + (heat-50)/200). Deal tilt = (paid - fair)/fair.",
+  "deal_kinds": {
+   "generous": {
+    "tilt_range": [
+     -1.0,
+     -0.15
+    ],
+    "coins_player": -6,
+    "coins_person": 6,
+    "greed": -15,
+    "trust": 3,
+    "player_greed": -1
+   },
+   "fair": {
+    "tilt_range": [
+     -0.15,
+     0.15
+    ],
+    "coins_player": 3,
+    "coins_person": -3,
+    "greed": -9,
+    "trust": 3,
+    "player_greed": 0
+   },
+   "tilted": {
+    "tilt_range": [
+     0.15,
+     0.45
+    ],
+    "coins_player": 12,
+    "coins_person": -10,
+    "greed": 8,
+    "trust": -5,
+    "player_greed": 10
+   },
+   "exploitative": {
+    "tilt_range": [
+     0.45,
+     1.5
+    ],
+    "coins_player": 20,
+    "coins_person": -18,
+    "greed": 14,
+    "trust": -10,
+    "player_greed": 12
+   }
+  },
+  "intents": {
+   "honest": {
+    "greed": -3,
+    "trust": 2,
+    "player_greed": -1
+   },
+   "kind": {
+    "greed": -4,
+    "trust": 1,
+    "player_greed": -1
+   },
+   "flattering": {
+    "greed": 5,
+    "trust": -1,
+    "player_greed": 2
+   },
+   "threatening": {
+    "greed": 10,
+    "trust": -12,
+    "player_greed": 2
+   }
+  },
+  "item_types": {
+   "goods": {
+    "greed_mult": 1.0,
+    "side": "Market heat responds (see market.rules). Fair/generous goods to a fear person also add 'Steady supply'."
+   },
+   "favor": {
+    "greed_mult": 0.7,
+    "side": "Trust gain x1.3; adds 'Owes the player a favor' +3 (6d), x1.5 on fear."
+   },
+   "secret": {
+    "greed_mult": 1.5,
+    "side": "Traded secrets spread by gossip. Exposing an unprotected discovered secret triggers exposure cascade."
+   },
+   "time": {
+    "greed_mult": 0.6,
+    "side": "Positive reason durations on the target +50% (patience)."
+   }
+  },
+  "trust_multipliers": {
+   "heal_mult": "0.65 + 0.72 * trust/100   (applied to negative greed deltas, then x(1 - weariness): trust amplifies healing)",
+   "harm_mult": "1.25 - 0.50 * trust/100   (applied to positive greed deltas from DEALS: trust softens damage)",
+   "word_mult": "0.60 + 0.70 * trust/100   (applied to ALL word deltas: low trust weakens words both ways)",
+   "structured": {
+    "heal": {
+     "a": 0.65,
+     "b": 0.72
+    },
+    "harm": {
+     "a": 1.25,
+     "b": -0.5
+    },
+    "word": {
+     "a": 0.6,
+     "b": 0.7
+    }
+   }
+  },
+  "result_formula": "greed_delta = (deal.greed * type_reaction[deal] * item_mult * harm_or_heal_mult) + (intent.greed * type_reaction[intent] * word_mult); trust_delta = deal.trust + intent.trust (favor item: x1.3)",
+  "witness_ripple": {
+   "fraction": 0.4,
+   "targets": "up to 4 others in the same district (nearest neighbors first)",
+   "player_greed_amplifier": "x1.25 on hostile deals only (tilted/exploitative/threatening) while player greed >= 60 - your cruelty spreads; your charity does not",
+   "valve": "x0.5 while safety valve is active"
+  },
+  "other_actions": {
+   "favor": {
+    "coins": -3,
+    "trust": 6,
+    "person_greed": 3,
+    "note": "Doing a favor: they owe you (debt reason), trust up."
+   },
+   "give_away": {
+    "coins": -15,
+    "person_greed": -6,
+    "trust": 4,
+    "player_greed": -3,
+    "note": "Pure charity to a poor person; no deal, no words."
+   },
+   "work_shop": {
+    "coins": 1,
+    "note": "Mind the counter; no social effect."
+   },
+   "protect_secret": {
+    "trust": 10,
+    "person_greed": -2,
+    "requires": "discovered secret"
+   },
+   "expose_secret": {
+    "coins": 12,
+    "requires": "discovered, unprotected secret",
+    "player_greed": 10,
+    "effects_note": "gossip cascade: 3 random people hear the secret (+4 greed, 2d)"
+   },
+   "promise": {
+    "trust": 8,
+    "note": "Creates a pending promise; keep it (favor effect) or betray it."
+   },
+   "keep_promise": {
+    "trust": 6,
+    "coins": -3,
+    "clears": "pending promise"
+   },
+   "betray": {
+    "person_greed": 15,
+    "trust": -25,
+    "player_greed": 5,
+    "days": 10
+   }
+  }
+ },
+ "reasons": {
+  "format": "Each reason = {label, delta, days}. Greed = clamp(base_greed + sum(active reason deltas), 0, 100). Deltas fade linearly over their duration, then drop off.",
+  "greed_reasons": {
+   "deal_fair": {
+    "label": "Fair deal",
+    "delta": -9,
+    "days": 8
+   },
+   "deal_generous": {
+    "label": "Generous deal",
+    "delta": -15,
+    "days": 9
+   },
+   "deal_tilted": {
+    "label": "Overcharged",
+    "delta": 8,
+    "days": 5
+   },
+   "deal_exploitative": {
+    "label": "Fleeced",
+    "delta": 14,
+    "days": 8
+   },
+   "word_honest": {
+    "label": "Honest words",
+    "delta": -3,
+    "days": 4
+   },
+   "word_kind": {
+    "label": "Kind words",
+    "delta": -4,
+    "days": 4
+   },
+   "word_flattering": {
+    "label": "Flattered",
+    "delta": 5,
+    "days": 4
+   },
+   "word_threatening": {
+    "label": "Threatened",
+    "delta": 10,
+    "days": 6
+   },
+   "neighbors_greedy": {
+    "label": "Greedy neighbors",
+    "delta": 15,
+    "days": 2
+   },
+   "neighbors_narrow": {
+    "label": "Content neighbors",
+    "delta": "dynamic: -(20 - min(12, 1.5 * days since the district last saw you))",
+    "days": 2
+   },
+   "prices_rising": {
+    "label": "Prices rising",
+    "delta": 5,
+    "days": 3
+   },
+   "gossip_rich": {
+    "label": "Gossip: someone struck it rich",
+    "delta": 4,
+    "days": 2
+   },
+   "hungry": {
+    "label": "Hungry",
+    "delta": 8,
+    "days": 3
+   },
+   "steady_supply": {
+    "label": "Steady supply",
+    "delta": -7,
+    "days": 4
+   },
+   "debt": {
+    "label": "Owes the player a favor",
+    "delta": 3,
+    "days": 6
+   },
+   "promise_made": {
+    "label": "They promised me",
+    "delta": -2,
+    "days": 5
+   },
+   "betrayal": {
+    "label": "Betrayed a promise",
+    "delta": 18,
+    "days": 10
+   },
+   "promise_kept": {
+    "label": "Kept their promise",
+    "delta": -3,
+    "days": 5
+   },
+   "secret_exposed": {
+    "label": "Their secret is public",
+    "delta": 15,
+    "days": 8
+   },
+   "corruption_seed": {
+    "label": "Taste of easy coin",
+    "delta": 12,
+    "days": 10
+   },
+   "old_habit": {
+    "label": "Old habit creeping back",
+    "delta": 8,
+    "days": 3
+   },
+   "festival": {
+    "label": "Festival warmth",
+    "delta": -6,
+    "days": 2
+   },
+   "stranger_tales": {
+    "label": "Stranger's tales of riches",
+    "delta": 10,
+    "days": 6
+   },
+   "rumor": {
+    "label": "Rumor of new riches",
+    "delta": 4,
+    "days": 2
+   },
+   "shortage": {
+    "label": "Shortage",
+    "delta": 5,
+    "days": 3
+   },
+   "crash": {
+    "label": "Market crash",
+    "delta": -10,
+    "days": 3
+   },
+   "scandal_self": {
+    "label": "Public scandal",
+    "delta": -20,
+    "days": 1
+   },
+   "scandal_fall": {
+    "label": "The mighty have fallen",
+    "delta": -6,
+    "days": 3
+   },
+   "tax_relief": {
+    "label": "Someone richer paid the tax",
+    "delta": -3,
+    "days": 2
+   },
+   "warmth": {
+    "label": "Neighborly warmth",
+    "delta": -4,
+    "days": 3
+   },
+   "wedding": {
+    "label": "A quiet wedding",
+    "delta": -3,
+    "days": 3
+   },
+   "scar_owner_killed": {
+    "label": "The last shop owner was killed",
+    "delta": 6,
+    "days": 20
+   },
+   "hoard_envy": {
+    "label": "The shopkeeper hoards coin",
+    "delta": 3,
+    "days": 2
+   },
+   "witness": {
+    "label": "Saw the deal",
+    "delta": "dynamic: 0.30 x target's net greed delta",
+    "days": 3
+   }
+  },
+  "trust_reasons": {
+   "tr_fair": {
+    "delta": 2,
+    "days": 12
+   },
+   "tr_generous": {
+    "delta": 3,
+    "days": 12
+   },
+   "tr_favor": {
+    "delta": 6,
+    "days": 12
+   },
+   "tr_protect_secret": {
+    "delta": 10,
+    "days": 15
+   },
+   "tr_honest": {
+    "delta": 2,
+    "days": 8
+   },
+   "tr_kind": {
+    "delta": 1,
+    "days": 8
+   },
+   "tr_promise_made": {
+    "delta": 8,
+    "days": 10
+   },
+   "tr_promise_kept": {
+    "delta": 6,
+    "days": 12
+   },
+   "tr_tilted": {
+    "delta": -5,
+    "days": 8
+   },
+   "tr_exploitative": {
+    "delta": -10,
+    "days": 10
+   },
+   "tr_flattering": {
+    "delta": -1,
+    "days": 6
+   },
+   "tr_threatening": {
+    "delta": -12,
+    "days": 10
+   },
+   "tr_betrayal": {
+    "delta": -25,
+    "days": 20
+   },
+   "tr_secret_exposed": {
+    "delta": -20,
+    "days": 15
+   },
+   "tr_player_gossip": {
+    "delta": -2,
+    "days": 6
+   },
+   "tr_witness": {
+    "delta": "dynamic: 0.30 x deal's trust delta",
+    "days": 8
+   },
+   "tr_scorn": {
+    "delta": -18,
+    "days": 16
+   }
+  },
+  "player_greed_reasons": {
+   "pg_tilted": {
+    "delta": 10,
+    "days": 4
+   },
+   "pg_exploitative": {
+    "delta": 12,
+    "days": 5
+   },
+   "pg_flattering": {
+    "delta": 2,
+    "days": 3
+   },
+   "pg_expose": {
+    "delta": 10,
+    "days": 6
+   },
+   "pg_betray": {
+    "delta": 5,
+    "days": 6
+   },
+   "pg_hoarding": {
+    "delta": 4,
+    "days": 3,
+    "condition": "applied daily while wealth > 2 * median person wealth"
+   },
+   "pg_fair": {
+    "delta": 0,
+    "days": 4
+   },
+   "pg_generous": {
+    "delta": -1,
+    "days": 4
+   },
+   "pg_honest": {
+    "delta": -1,
+    "days": 3
+   },
+   "pg_kind": {
+    "delta": -1,
+    "days": 3
+   },
+   "pg_give_away": {
+    "delta": -2,
+    "days": 4
+   }
+  }
+ },
+ "contagion": {
+  "model": "Granovetter/Watts threshold model, run once per day per person over their neighbor set.",
+  "neighbor_weights": "Same-district ring neighbors weight 1; hubs count weight 2 anywhere they appear.",
+  "rule": "greedy_frac = sum(weight of greedy neighbors) / sum(all neighbor weights). If greedy_frac >= contagion_threshold[type], renew 'Greedy neighbors' +15 (2d). If no same-district neighbor is greedy and all same-district neighbors are narrow (greed <= 25), renew 'Content neighbors': a shield of -(20 - min(12, 1.5 * days since the district last saw you)) (2d) - visited districts hold at -20, abandoned ones rot back toward -8. Narrow people take contagion-tagged reasons at x0.5 (the content resist pressure).",
+  "thresholds": {
+   "fear": 0.6,
+   "pride": 0.5,
+   "envy": 0.35
+  },
+  "valve": "While the safety valve is active, thresholds are +0.05 harder to cross and the 'Greedy neighbors' delta is halved to +6.",
+  "secret_people": "Un-corrupted secret people receive contagion-tagged reasons (neighbors, prices, gossip, rumor, stranger tales) at x0.3 - they look immune.",
+  "thresholds_note": null
+ },
+ "gossip": {
+  "daily": "Each greedy person (greed >= their tip) spreads gossip with 30% chance/day; a greedy hub with 60% chance/day to 2 targets. Target: 65% same district, 35% any district. Effect: 'Gossip: someone struck it rich' +4 (2d).",
+  "player_gossip": "While player greed >= 60: 12%/day a random person hears 'the shopkeeper hoards coin' -> trust reason -2 (6d) and greed reason hoard_envy +3 (2d). Your own greed becomes gossip."
+ },
+ "market": {
+  "heat_daily_drift": "heat += (mean greed of Market Square people - 50) * 0.04, clamped to [0,100]",
+  "deal_effects": "Tilted/exploitative GOODS deal in Market Square: heat +3. Fair/generous GOODS deal in Market Square: heat -2.",
+  "price_reasons": "heat >= 60: everyone in Market Square gets 'Prices rising' +5 (3d) renewed daily. heat >= 75: ALL districts get 'Prices rising' +6 (3d) - a citywide price spiral.",
+  "prices_reason_market": 5,
+  "prices_reason_citywide": 6,
+  "note": "This is the price channel of contagion: greedy sellers push heat up, heat pushes reasons onto everyone."
+ },
+ "trust_rules": {
+  "earned_by": [
+   "Repeated fair deals over time (tr_fair, tr_generous)",
+   "Protecting secrets (tr_protect_secret)",
+   "Keeping promises and favors (tr_favor, tr_promise_kept)",
+   "Honest words (tr_honest)"
+  ],
+  "lost_by": [
+   "Tilted/exploitative deals",
+   "Threats",
+   "Betrayal",
+   "Exposing secrets",
+   "Player greed gossip"
+  ],
+  "decay": "Trust reasons fade on their own durations; unattended trust drifts back toward the person's base.",
+  "visibility": "trust >= 25: fuzzy greed estimate + partial 'why' list. trust >= 60: exact reason list, secret hint, and their true tip threshold.",
+  "formula": "trust = clamp(20 + base_offset + sum(trust reason deltas), 0, 100); base_offset = person.base_trust - 20"
+ },
+ "relapse": {
+  "locked_causes": [
+   "Neglect",
+   "Greedy neighbors",
+   "Betrayal by the player"
+  ],
+  "mechanic": "A narrow person tracks last_positive_day. After grace_days without any positive contact, 'Old habit creeping back' +8 (+10 if at least half their neighbors are greedy) is re-added each neglected day (3d fade, stacking to ~+16/day of pressure) and is cleared entirely by any positive contact. Neglect alone drifts a healed person to an uneasy plateau; the relapse COMPLETES when any greedy pressure joins them. Betrayal (+18) completes it instantly.",
+  "grace_days": 2,
+  "old_habit_delta": 8,
+  "old_habit_delta_greedy_neighbors": 10,
+  "base_sink_per_day": 4.0,
+  "base_recover_per_day": 3.5,
+  "hysteresis": "base_greed drifts down 4/day while greed <= 25 (floor 15; the want narrows) and back up 3.5/day while greed >= 45 (cap at initial base). Healing lowers the floor; neglect lets it climb back fast.",
+  "stated_guarantee": "A neglected narrow person under active neighbor pressure (their contagion threshold crossed) relapses within 12 days of the last positive contact, typically 4-8. A neglected person with no pressure holds at an uneasy plateau until pressure arrives. A fully narrow (content-shielded) neighborhood holds as long as the shield stands.",
+  "relapse_scorn": "When a person you had healed tips back to greedy, they add trust reason 'You healed me, then left me' -18 (16d), and each relapse adds 15% weariness (max 40%) to all future healing on them. Healing the same person twice is harder - neglect has a compounding cost.",
+  "weariness_per_relapse": 0.18,
+  "weariness_max": 0.42,
+  "weariness": "Each relapse adds 15% weariness (max 35%) to all future healing on that person; weariness decays 2%/day as the city forgets the routine. Healing the same person twice is harder, but not forever.",
+  "weariness_decay_per_day": 0.02
+ },
+ "player_greed_rules": {
+  "raises": [
+   "Tilted deal +10",
+   "Exploitative deal +12",
+   "Flattery +2",
+   "Exposing a secret +10",
+   "Betraying a promise +5",
+   "Hoarding (wealth > 2x median) +4/day - a growing coffers feeds itself"
+  ],
+  "lowers": [
+   "Generous deal -1",
+   "Honest/kind words -1",
+   "Give away -2 (fair deals are greed-neutral: they pay the bills, they do not purify)"
+  ],
+  "effects": "Player greed >= 60: trade ripple x1.5, player becomes gossip subject, fallen-healer risk. Healer ending needs player greed < 40; fallen healer needs >= 65.",
+  "note": "Tilted/exploitative deals corrupt the player hard: one corrupted slot per day outweighs three healing slots. That is what makes the fallen-healer path playable and the greedy path fast."
+ },
+ "danger": {
+  "visibility": "Hidden. The player only sees warning stages.",
+  "formula_readable": "gain_raw = (3.5*max(0,(wealth-40)/100) + 2*max(0,wealth/median_person_wealth - 3) + distrust) * (1.4 - 0.8*mean_trust/100); distrust = 1.5 if mean_trust < 40 (+1.5 more if < 25); gain = min(gain_raw, 14); danger += gain - decay; decay = 4 if wealth < 100 else 2",
+  "structured": {
+   "base_term": {
+    "coef": 3.5,
+    "grace_below": 40,
+    "divisor": 100
+   },
+   "gap_term": {
+    "coef": 2.0,
+    "multiple_over_median": 3
+   },
+   "distrust_term": {
+    "trust_lt_40": 1.5,
+    "trust_lt_25_extra": 1.5
+   },
+   "trust_mitigation": {
+    "a": 1.4,
+    "b": -0.8
+   },
+   "gain_cap": 14,
+   "decay_wealth_below_limit": 4,
+   "decay_wealth_at_or_above_limit": 2
+  },
+  "gain_cap_reason": "A mob needs time to organize: rumor must spread, grudges must gather. The cap guarantees at least 5 days of warnings between stage 1 (danger 30) and death (danger 100).",
+  "warnings": [
+   {
+    "at": 30,
+    "stage": 1,
+    "sign": "Stares and whispers: people watch you shop."
+   },
+   {
+    "at": 50,
+    "stage": 2,
+    "sign": "Overcharging and snubs: prices quietly rise for you, old friends are cold."
+   },
+   {
+    "at": 70,
+    "stage": 3,
+    "sign": "Threats and break-ins: thieves target the shop."
+   },
+   {
+    "at": 90,
+    "stage": 4,
+    "sign": "The mob gathers at your door at night."
+   }
+  ],
+  "death": "danger >= 100: the city kills the player. Doom ending (killed)."
+ },
+ "safety_valve": {
+  "locked_intent": "Keeps a very dark city recoverable (RimWorld-expectations inspired).",
+  "trigger": "city_greed >= 85",
+  "effects": {
+   "heal_mult_x": 2.0,
+   "harm_mult_x": 0.5,
+   "neighbors_greedy_delta": 7,
+   "contagion_threshold_bonus": 0.05,
+   "extra_heat_decay": 1,
+   "event_weight_boosts": {
+    "market_crash": 3,
+    "scandal": 3,
+    "festival": 2
+   },
+   "base_sink_while_desperate": 1.5,
+   "base_sink_condition": "city_greed >= 80 (the dying line: while the collapse timer runs, everyone's settled want shrinks 1.5/day)"
+  },
+  "readable": "At 76 the dying zone opens (collapse timer: 76 held for 8 days = doom_collapsed); at 80 the dying city's standards start collapsing (base sink 1.5/day) and at 85 despair peaks and the valve turns on fully (help x2, greed barely spreads, shock events). Darkness is a race between the collapse timer and the city's own despair - and the despair usually wins if anyone is working the city."
+ },
+ "secret_people": {
+  "count": 4,
+  "kinds": [
+   "food",
+   "money"
+  ],
+  "locked_definition": "Appear immune to greed but hide a secret: they are greedy about food or money specifically. Fragile and easy to corrupt.",
+  "immunity_factor": 0.3,
+  "discovery": "trust >= 42 reveals a hint ('you have seen where they stash bread/coins'), then their secret and true nature. Discovery is checked nightly.",
+  "corruption": "A tilted or exploitative deal in their weak-spot item (food = goods, money = coin) adds 'Taste of easy coin' +12 (10d), removes immunity, and sets greed_growth_mult = 1.5 forever.",
+  "protect": "protect_secret action: trust +10, greed -2; a protected secret can never be exposed.",
+  "peace": "A secret person healed below narrow_max with their secret protected reaches 'at peace' (base floor 10): the hardest cure, the longest hold."
+ },
+ "promises": {
+  "make": "promise action: +8 trust now, pending promise recorded.",
+  "keep": "keep_promise: +6 trust, -3 coins, 'Kept their promise' -3 (5d).",
+  "betray": "betray: 'Betrayed a promise' +15 (10d) on the victim, trust -25, player greed +5. Betrayal is the fastest way to relapse a healed person.",
+  "note": "Favors owed are tracked separately as debt reasons."
+ },
+ "shop_and_progression": {
+  "shop_is_hub": true,
+  "look_reflects_greed": "Shop sprite and interior degrade/ornament with player greed tiers (0-25 plain, 26-50 polished, 51-75 gilded, 76+ sickly gold and barloys of coin).",
+  "upgrades": [
+   {
+    "id": "shelf",
+    "cost": 40,
+    "effect": "+1 buy/sell slot per day; buy prices 10% better."
+   },
+   {
+    "id": "sign",
+    "cost": 60,
+    "effect": "Fair deals ripple +50% (honest reputation)."
+   },
+   {
+    "id": "back_room",
+    "cost": 80,
+    "effect": "Store secrets/favors safely; thieves events cannot touch them."
+   },
+   {
+    "id": "teapot",
+    "cost": 120,
+    "effect": "Every other day gain a 5th action (hosting)."
+   }
+  ],
+  "ledger": "Unlocked day 3. Holds the previous owner's last month of entries (see previous_owner). After a death, the heir's ledger also contains the last run's summary: end day, wealth, danger stage, who tipped when.",
+  "wall_of_owners": "Adopted: one portrait per finished run with its ending; hangs in the shop across all cities.",
+  "new_items": "Seasons REJECTED for 1.0; new trade items unlock via shop upgrades (shelf 2 adds cloth/tools).",
+  "sim_coverage": "Upgrades abstracted out of sim.py (economy depth is out of scope for loop proofing); everything else numeric here is simulated."
+ },
+ "storyteller": {
+  "style": "RimWorld-like pacing: picks 0-1 events/day with probability event_chance, weighted among eligible events; pressure events dominate in dark cities, kindness events in healing cities; eases off when the player is drowning (no thieves below danger 65, no famine while the city is already dark).",
+  "chance": 0.6,
+  "events": [
+   {
+    "id": "famine",
+    "name": "Famine",
+    "weight": 10,
+    "condition": "city < 75",
+    "effects": "'Hungry' +8 (3d) on 4 random people (Docks-biased), heat +8"
+   },
+   {
+    "id": "festival",
+    "name": "Festival",
+    "weight": 8,
+    "condition": "city > 60",
+    "effects": "'Festival warmth' -6 (2d) to everyone, heat -6"
+   },
+   {
+    "id": "tax_collector",
+    "name": "Tax collector",
+    "weight": 10,
+    "condition": "player wealth > 120",
+    "min_player_wealth": 120,
+    "effects": "takes 12% of player wealth; 'Someone richer paid the tax' -4 (2d) to all. Rich players attract the collector."
+   },
+   {
+    "id": "stranger",
+    "name": "A stranger arrives",
+    "weight": 11,
+    "condition": "always (weight 14 when city < 40)",
+    "effects": "'Stranger's tales of riches' +10 (6d) to one random non-secret person"
+   },
+   {
+    "id": "rumor",
+    "name": "A rumor",
+    "weight": 10,
+    "condition": "at least one greedy hub",
+    "effects": "'Rumor of new riches' +4 (2d) on 4 random people, sourced from a greedy hub"
+   },
+   {
+    "id": "shortage",
+    "name": "Supply shortage",
+    "weight": 7,
+    "condition": "heat < 70",
+    "effects": "'Shortage' +5 (3d) on 4 random people (Docks/Market bias), heat +6"
+   },
+   {
+    "id": "thieves",
+    "name": "Break-in",
+    "weight": 12,
+    "condition": "danger >= 65",
+    "effects": "player loses 12 coins"
+   },
+   {
+    "id": "market_crash",
+    "name": "Market crash",
+    "weight": 14,
+    "condition": "city >= 85 (valve shock)",
+    "effects": "heat -25; 'Market crash' -10 (3d) on Market Square and The Hill"
+   },
+   {
+    "id": "scandal",
+    "name": "A scandal",
+    "weight": 12,
+    "condition": "city >= 85 (valve shock)",
+    "effects": "a random greedy hub falls: -20 greed instantly; envy people 'The mighty have fallen' -6 (3d)"
+   },
+   {
+    "id": "kindness_wave",
+    "name": "Kindness spreads",
+    "weight": 10,
+    "condition": "city <= 35 AND mean_trust >= 50",
+    "effects": "'Neighborly warmth' -4 (3d) on everyone below greed 40"
+   },
+   {
+    "id": "wedding",
+    "name": "A wedding",
+    "weight": 4,
+    "condition": "two narrow people share a district",
+    "effects": "both -3 (3d), trust +4 each"
+   },
+   {
+    "id": "quiet_day",
+    "name": "A quiet day",
+    "weight": 10,
+    "condition": "fallback",
+    "effects": "nothing"
+   }
+  ]
+ },
+ "endings": {
+  "check_order": [
+   "doom_killed",
+   "doom_collapsed",
+   "healer",
+   "fallen_healer",
+   "tycoon"
+  ],
+  "conditions": {
+   "doom_killed": {
+    "when": "danger >= 100",
+    "readable": "The city kills you."
+   },
+   "doom_collapsed": {
+    "when": "city_greed >= 76 for 8 consecutive days",
+    "readable": "The city collapses into pure greed."
+   },
+   "healer": {
+    "when": "day >= 12 AND city_greed <= 20 AND every hub narrow (greed <= 25) AND player_greed < 40 AND player greed PEAK < 55 AND mean_trust >= 30",
+    "readable": "The city is cured, it trusts you, and you stayed good."
+   },
+   "fallen_healer": {
+    "when": "city_greed <= 20 AND player greed PEAK >= 55 (peak greed latches: you became greedy, even if finishing the cure purifies part of it)",
+    "readable": "You cured the city, and it corrupted you."
+   },
+   "tycoon": {
+    "when": "wealth >= 250 AND danger <= 40 AND day >= 12",
+    "readable": "You got very rich and slipped out before the city turned. The knife-edge: danger 36 at the moment you cross 250."
+   }
+  },
+  "day_cap": "day > 80: run ends 'day_cap' (the road goes on). Counted as a non-ending outcome for reporting.",
+  "notes": "Priority order means a cured city with player greed 40-64 and wealth < 250 keeps playing: the player must choose who they become."
+ },
+ "carry_over": {
+  "healer": {
+   "to": "new city",
+   "trust_bonus_all": 10,
+   "wealth_formula": "20 + 0.2 * final_wealth",
+   "player_greed": "min(30, final player greed)",
+   "trinket": "Fenn's Scale: prices show their fair value (QoL, no math change)",
+   "readable": "Your reputation precedes you: trust starts higher."
+  },
+  "tycoon": {
+   "to": "new city",
+   "wealth_formula": "max(120, 0.6 * final_wealth)",
+   "danger_start": 30,
+   "player_greed": "carries as-is",
+   "readable": "You arrive rich: the gap and the danger start high on day one."
+  },
+  "fallen_healer": {
+   "to": "new city",
+   "trust_bonus_all": -5,
+   "player_greed": "carries as peak (>= 60)",
+   "readable": "Rumors preceded you, and your greed came with you: you may be the one who spreads it (ripple x1.5 applies from day one)."
+  },
+  "doom_killed": {
+   "to": "SAME city, new heir",
+   "city_state": "preserved: all greed, trust and heat carry; active reasons have durations halved",
+   "scar": "'The last shop owner was killed' +6 (20d) added to everyone",
+   "trust_reset": "trust = 0.5 * current (a new face, but the city remembers the family)",
+   "heir_start": {
+    "wealth": 40,
+    "player_greed": 20,
+    "danger": 0
+   },
+   "ledger": "heir reads the ledger: sees previous run summary (end day, wealth, danger stage reached, warnings seen)",
+   "readable": "The city keeps the scars; the death becomes a reason in people's lists."
+  },
+  "doom_collapsed": {
+   "to": "new city",
+   "start": {
+    "wealth": 20,
+    "player_greed": 15
+   },
+   "readable": "You flee with nothing."
+  },
+  "day_cap": {
+   "to": "new city",
+   "wealth_formula": "20 + 0.3 * final_wealth",
+   "player_greed": "0.5 * final",
+   "readable": "You move on before anything ends."
+  }
+ },
+ "day_loop": {
+  "phases": [
+   "1. morning: advance day; generate the morning report from yesterday's diffs",
+   "2. player phase: spend actions (2 on tutorial days 1-2, else 4)",
+   "3. contagion pass: threshold check per person over neighbors",
+   "4. gossip pass: greedy people and greedy hubs spread",
+   "5. market pass: heat drift + price reasons",
+   "6. base drift: hysteresis on base_greed",
+   "7. relapse pass: old-habit reasons for neglected narrow people",
+   "8. storyteller: 0-1 event",
+   "9. meters: recompute city greed and mean trust",
+   "10. danger update: gain/decay, warning stage changes",
+   "11. ending checks in priority order",
+   "12. night: reasons tick down one day"
+  ],
+  "city_greed_formula": "city_greed = 0.75 * weighted_mean(person greed, hubs weight 2) + 0.25 * market_heat"
+ },
+ "economy": {
+  "person_income_daily": 2,
+  "person_wealth_clamp": [
+   5,
+   120
+  ],
+  "player_wealth_clamp": [
+   0,
+   null
+  ],
+  "note": "Each person earns 2 coins/day at night (wage). Keeps the median stable and drains never become permanent. Median person wealth (min 20) feeds the danger gap term."
+ },
+ "city_generation": {
+  "seeded_by": "gen_seed (rng key 'city-<gen_seed>')",
+  "size": "5 districts x 6 people = 30",
+  "districts": [
+   {
+    "id": "market",
+    "name": "Market Square",
+    "layer": "prices",
+    "greed_types": [
+     "envy"
+    ]
+   },
+   {
+    "id": "tavern",
+    "name": "Tavern Row",
+    "layer": "gossip",
+    "greed_types": [
+     "envy"
+    ]
+   },
+   {
+    "id": "counting",
+    "name": "Counting House",
+    "layer": "debts",
+    "greed_types": [
+     "pride",
+     "pride",
+     "fear"
+    ]
+   },
+   {
+    "id": "docks",
+    "name": "Docks",
+    "layer": "poverty",
+    "greed_types": [
+     "fear"
+    ]
+   },
+   {
+    "id": "hill",
+    "name": "The Hill",
+    "layer": "wealth",
+    "greed_types": [
+     "pride"
+    ]
+   }
+  ],
+  "hub_rule": "First listed person of each district is its hub (index 0).",
+  "secrets_rule": "Pick 4 of the 5 districts (seeded); in each, one seeded non-hub person becomes a secret-keeper with a seeded kind (food/money).",
+  "base_greed": "normal(type mean, 6) clamped [15,75]; fear 62, pride 64, envy 60 - the city starts deep in the warning band; secret-keepers 22",
+  "base_greed_means": {
+   "fear": 62,
+   "pride": 64,
+   "envy": 60
+  },
+  "base_trust": "normal(28, 6) clamped [12,45]; secret-keepers 32",
+  "tip_jitter": "uniform(-6, +6) around the type tip",
+  "wealth_ranges": {
+   "market": [
+    18,
+    40
+   ],
+   "tavern": [
+    16,
+    34
+   ],
+   "counting": [
+    30,
+    58
+   ],
+   "docks": [
+    10,
+    26
+   ],
+   "hill": [
+    55,
+    95
+   ]
+  },
+  "neighbors": "Ring within district (prev/next) plus 6 seeded cross-district pairs drawn from the 10 unordered district pairs.",
+  "market_heat_start": "uniform 55-70 (prices are already climbing when you arrive)",
+  "player_start": {
+   "wealth": 50,
+   "greed": 30,
+   "danger": 0
+  },
+  "previous_owner": "Uncle Fenn, kind relative, disappeared. Seeded: death day 40-55, final wealth 300-450. The ledger holds his last month: early fair prices, then tilted deals, warnings logged and ignored, last entry: 'They were at the door. The ledger goes to whoever reads it. Don't be me.'",
+  "city_names": "prefix + suffix from pools (seeded)",
+  "name_prefixes": [
+   "Brack",
+   "Grel",
+   "Ash",
+   "Mire",
+   "Crow",
+   "Fenn",
+   "Hollow",
+   "Salt",
+   "Dun",
+   "Vess"
+  ],
+  "name_suffixes": [
+   "water",
+   "ford",
+   "mouth",
+   "haven",
+   "stead",
+   "brook",
+   "gate",
+   "fall",
+   "wick",
+   "mere"
+  ]
+ },
+ "canonical_city": {
+  "gen_seed": 0,
+  "note": "Frozen output of the generator at gen_seed 0. The GDD roster table is this table. sim.py asserts generator(0) matches it.",
+  "city_name": "Grelwater",
+  "prev_owner": {
+   "name": "Uncle Fenn",
+   "death_day": 50,
+   "final_wealth": 361
+  },
+  "heat_start": 68.9,
+  "roster": [
+   {
+    "district": "market",
+    "name": "Marla Vess",
+    "role": "Stall Matriarch",
+    "greed_type": "envy",
+    "is_hub": true,
+    "secret_kind": null,
+    "base_greed": 62.0,
+    "base_trust": 30.0,
+    "tip": 43.4
+   },
+   {
+    "district": "market",
+    "name": "Tov Blake",
+    "role": "Baker",
+    "greed_type": "envy",
+    "is_hub": false,
+    "secret_kind": "food",
+    "base_greed": 22.0,
+    "base_trust": 32.0,
+    "tip": 41.7
+   },
+   {
+    "district": "market",
+    "name": "Sela Finch",
+    "role": "Fishmonger",
+    "greed_type": "envy",
+    "is_hub": false,
+    "secret_kind": null,
+    "base_greed": 72.2,
+    "base_trust": 23.4,
+    "tip": 50.8
+   },
+   {
+    "district": "market",
+    "name": "Durn Cobb",
+    "role": "Spice Trader",
+    "greed_type": "envy",
+    "is_hub": false,
+    "secret_kind": null,
+    "base_greed": 53.9,
+    "base_trust": 35.2,
+    "tip": 44.7
+   },
+   {
+    "district": "market",
+    "name": "Pem Willet",
+    "role": "Stall Apprentice",
+    "greed_type": "envy",
+    "is_hub": false,
+    "secret_kind": null,
+    "base_greed": 54.2,
+    "base_trust": 24.9,
+    "tip": 40.2
+   },
+   {
+    "district": "market",
+    "name": "Hessa Vess",
+    "role": "Preserve Seller",
+    "greed_type": "envy",
+    "is_hub": false,
+    "secret_kind": null,
+    "base_greed": 65.0,
+    "base_trust": 33.2,
+    "tip": 45.4
+   },
+   {
+    "district": "tavern",
+    "name": "Old Cuttle",
+    "role": "Barkeep",
+    "greed_type": "envy",
+    "is_hub": true,
+    "secret_kind": null,
+    "base_greed": 62.0,
+    "base_trust": 30.0,
+    "tip": 47.4
+   },
+   {
+    "district": "tavern",
+    "name": "Ryn Ash",
+    "role": "Bard",
+    "greed_type": "envy",
+    "is_hub": false,
+    "secret_kind": null,
+    "base_greed": 59.2,
+    "base_trust": 24.9,
+    "tip": 48.4
+   },
+   {
+    "district": "tavern",
+    "name": "Dova Mott",
+    "role": "Card Shark",
+    "greed_type": "envy",
+    "is_hub": false,
+    "secret_kind": null,
+    "base_greed": 56.5,
+    "base_trust": 31.4,
+    "tip": 50.7
+   },
+   {
+    "district": "tavern",
+    "name": "Bram Tull",
+    "role": "Dockhand",
+    "greed_type": "envy",
+    "is_hub": false,
+    "secret_kind": null,
+    "base_greed": 54.5,
+    "base_trust": 30.1,
+    "tip": 39.9
+   },
+   {
+    "district": "tavern",
+    "name": "Ida Spoon",
+    "role": "Cook",
+    "greed_type": "envy",
+    "is_hub": false,
+    "secret_kind": null,
+    "base_greed": 58.7,
+    "base_trust": 31.8,
+    "tip": 45.1
+   },
+   {
+    "district": "tavern",
+    "name": "Kes Needle",
+    "role": "Tailor",
+    "greed_type": "envy",
+    "is_hub": false,
+    "secret_kind": "food",
+    "base_greed": 22.0,
+    "base_trust": 32.0,
+    "tip": 45.0
+   },
+   {
+    "district": "counting",
+    "name": "Odara Vail",
+    "role": "Ledgermistress",
+    "greed_type": "pride",
+    "is_hub": true,
+    "secret_kind": null,
+    "base_greed": 66.0,
+    "base_trust": 30.0,
+    "tip": 44.2
+   },
+   {
+    "district": "counting",
+    "name": "Juno Pask",
+    "role": "Clerk",
+    "greed_type": "pride",
+    "is_hub": false,
+    "secret_kind": null,
+    "base_greed": 61.7,
+    "base_trust": 34.1,
+    "tip": 44.6
+   },
+   {
+    "district": "counting",
+    "name": "Hal Forty",
+    "role": "Appraiser",
+    "greed_type": "fear",
+    "is_hub": false,
+    "secret_kind": null,
+    "base_greed": 65.6,
+    "base_trust": 27.5,
+    "tip": 49.1
+   },
+   {
+    "district": "counting",
+    "name": "Sib Ranter",
+    "role": "Moneylender",
+    "greed_type": "pride",
+    "is_hub": false,
+    "secret_kind": null,
+    "base_greed": 56.7,
+    "base_trust": 26.8,
+    "tip": 52.6
+   },
+   {
+    "district": "counting",
+    "name": "Weck Dole",
+    "role": "Notary",
+    "greed_type": "pride",
+    "is_hub": false,
+    "secret_kind": null,
+    "base_greed": 59.7,
+    "base_trust": 18.1,
+    "tip": 47.4
+   },
+   {
+    "district": "counting",
+    "name": "Mote",
+    "role": "Errand Runner",
+    "greed_type": "fear",
+    "is_hub": false,
+    "secret_kind": null,
+    "base_greed": 64.6,
+    "base_trust": 30.5,
+    "tip": 50.0
+   },
+   {
+    "district": "docks",
+    "name": "Mother Brine",
+    "role": "Soup-Keeper",
+    "greed_type": "fear",
+    "is_hub": true,
+    "secret_kind": null,
+    "base_greed": 64.0,
+    "base_trust": 30.0,
+    "tip": 51.0
+   },
+   {
+    "district": "docks",
+    "name": "Oll Pike",
+    "role": "Deckhand",
+    "greed_type": "fear",
+    "is_hub": false,
+    "secret_kind": "food",
+    "base_greed": 22.0,
+    "base_trust": 32.0,
+    "tip": 56.2
+   },
+   {
+    "district": "docks",
+    "name": "Maren Salt",
+    "role": "Netmender",
+    "greed_type": "fear",
+    "is_hub": false,
+    "secret_kind": null,
+    "base_greed": 65.2,
+    "base_trust": 30.2,
+    "tip": 58.8
+   },
+   {
+    "district": "docks",
+    "name": "Corvo Lash",
+    "role": "Netmaker",
+    "greed_type": "fear",
+    "is_hub": false,
+    "secret_kind": null,
+    "base_greed": 54.1,
+    "base_trust": 30.1,
+    "tip": 55.6
+   },
+   {
+    "district": "docks",
+    "name": "Rutt Barrow",
+    "role": "Stevedore",
+    "greed_type": "fear",
+    "is_hub": false,
+    "secret_kind": null,
+    "base_greed": 62.7,
+    "base_trust": 33.2,
+    "tip": 55.3
+   },
+   {
+    "district": "docks",
+    "name": "Wick",
+    "role": "Oyster Girl",
+    "greed_type": "fear",
+    "is_hub": false,
+    "secret_kind": null,
+    "base_greed": 59.9,
+    "base_trust": 20.7,
+    "tip": 59.1
+   },
+   {
+    "district": "hill",
+    "name": "Ambrose Vane",
+    "role": "Squire",
+    "greed_type": "pride",
+    "is_hub": true,
+    "secret_kind": null,
+    "base_greed": 66.0,
+    "base_trust": 30.0,
+    "tip": 48.4
+   },
+   {
+    "district": "hill",
+    "name": "Odile Charm",
+    "role": "Widow",
+    "greed_type": "pride",
+    "is_hub": false,
+    "secret_kind": null,
+    "base_greed": 67.3,
+    "base_trust": 26.9,
+    "tip": 53.8
+   },
+   {
+    "district": "hill",
+    "name": "Dorian Sull",
+    "role": "Merchant Prince",
+    "greed_type": "pride",
+    "is_hub": false,
+    "secret_kind": null,
+    "base_greed": 58.6,
+    "base_trust": 20.1,
+    "tip": 48.0
+   },
+   {
+    "district": "hill",
+    "name": "Lady Pyne",
+    "role": "Collector",
+    "greed_type": "pride",
+    "is_hub": false,
+    "secret_kind": "money",
+    "base_greed": 22.0,
+    "base_trust": 32.0,
+    "tip": 53.0
+   },
+   {
+    "district": "hill",
+    "name": "Gray",
+    "role": "Butler",
+    "greed_type": "pride",
+    "is_hub": false,
+    "secret_kind": null,
+    "base_greed": 74.7,
+    "base_trust": 28.3,
+    "tip": 49.0
+   },
+   {
+    "district": "hill",
+    "name": "Silky Drew",
+    "role": "Tailor to the Rich",
+    "greed_type": "pride",
+    "is_hub": false,
+    "secret_kind": null,
+    "base_greed": 56.4,
+    "base_trust": 26.1,
+    "tip": 47.9
+   }
+  ]
+ },
+ "bots": {
+  "healer": {
+   "target_ending": "healer",
+   "policy": "Days 1-2 tutorial: fair deals + kind words to the first hubs met. Days 3-5 trust phase: favors and fair deals in the focus district. Then: focus district = highest mean greed not yet secured (mean < 26). Target = focus hub if hub greed >= 30, else greediest non-narrow in focus. Deal: generous if wealth > 45 else fair; word kind for fear, honest for pride/envy. Protect discovered secrets (1 slot). If wealth < 30: one work_shop slot. If wealth > 60: one give_away slot to the greediest poor person. Never betrays; keeps promises."
+  },
+  "tycoon": {
+   "target_ending": "tycoon",
+   "policy": "Build phase (until mean trust of the 8 richest >= 72 or day 12): 3 fair deals to hubs/richest (honest words) + 1 favor to the lowest-trust hub; keeps wealth <= 100 via a give_away/favor if above. Sprint phase: 4 tilted deals on richest targets (flattering to pride, honest to others). If warning stage >= 2 or target trust mean < 65: one build-phase day. Reaches 250 and fires tycoon."
+  },
+  "fallen_healer": {
+   "target_ending": "fallen_healer",
+   "policy": "Healer policy days 1-12; promises the focus target on days 4, 8 (2 promises). Day 13: betrays the oldest promise, then exploits: 2 tilted deals on highest-trust people (flattering to pride) + 1 fair heal in focus + 1 slot that keeps wealth <= 110 (give_away x2 if above, else favor). Greed rises past 65 while the city cure finishes; fires fallen_healer."
+  },
+  "passive": {
+   "target_ending": "none (control bot: doing nothing)",
+   "policy": "4x work_shop every day. Never interacts."
+  },
+  "random": {
+   "target_ending": "none (control bot)",
+   "policy": "Each slot, seeded uniform: 50% random trade (random target, item, deal, intent), 15% favor, 25% work_shop, 10% give_away. Betrays/keeps promises 50/50."
+  },
+  "reckless_greedy": {
+   "target_ending": "doom by death (control bot for the danger system)",
+   "policy": "3 exploitative deals on the richest targets (threatening words) + 1 favor to the richest (grease). Exposes discovered secrets for coin. Ignores all warnings. Should be killed by the city."
+  }
+ },
+ "tests": {
+  "seeds_per_strategy": 200,
+  "definitions": [
+   {
+    "id": "T1_endings_reachable",
+    "asserts": "healer bot reaches healer >= 50%; tycoon bot reaches tycoon >= 50%; fallen bot reaches fallen >= 45%; reckless bot killed (doom_killed) >= 85%; passive bot doom >= 80%; each ending reached mainly by its intended bot (>50% of that ending's runs)"
+   },
+   {
+    "id": "T2_no_softlocks",
+    "asserts": "every run terminates in one of the 6 outcomes; passive bot median end day >= 20 (loses eventually, not instantly)"
+   },
+   {
+    "id": "T3_no_dominant_strategy",
+    "asserts": "no achievement bot (healer/tycoon/fallen) reaches its target in > 70% of seeds; random bot healer rate < 10%. Note: doom is the failure state, not an achievement; reckless/passive reaching doom reliably is REQUIRED by the danger design."
+   },
+   {
+    "id": "T4_tension",
+    "asserts": "pooled across all bots: >= 70% of runs see city_greed >= 60 at some point; >= 50% of runs see danger >= 30 (stage 1 warning)"
+   },
+   {
+    "id": "T6_relapse",
+    "asserts": "healed people left alone relapse within 12 days (mean <= 9)"
+   },
+   {
+    "id": "T7_contagion",
+    "asserts": "tipping a hub cascades: >= 3 neighbors tip within 12 days; healing the hub reverses: within 10 days >= 2 of those neighbors drop back below tip"
+   },
+   {
+    "id": "T8_danger",
+    "asserts": "reckless bot killed before day 60 in >= 95% of runs; warnings (stage 1) appear >= 5 days before death in every death"
+   },
+   {
+    "id": "T9_run_length",
+    "asserts": "median run length 25-50 days pooled; day_cap outcome <= 15% pooled"
+   },
+   {
+    "id": "T10_cities_differ",
+    "asserts": "24 generated cities x 6 bots x 4 seeds: outcome distributions differ across cities (report per-city healer-rate spread and total-variation distances)"
+   },
+   {
+    "id": "T11_long_loop",
+    "asserts": "3 consecutive runs with carry-over: healer -> tycoon -> fallen chain effects verified; killed-player path: heir inherits SAME city with scars and reaches an ending"
+   },
+   {
+    "id": "T12_determinism",
+    "asserts": "same seed twice -> byte-identical result"
+   },
+   {
+    "id": "T13_secrets",
+    "asserts": "healer bot discovers >= 1 secret on average (only cluster-adjacent secrets are reachable), corrupts <= 1, reckless bot corrupts/exposes when it touches secrets (>= 0.2 avg)"
+   },
+   {
+    "id": "T5_safety_valve",
+    "asserts": "force city to ~85-86 (dark): the valve shock window is short (the city cools within days), so shocks fire in >= 50% of dark starts; the city never worsens; a working healer pulls it down (mean drop >= 8 points over 45 days) - recovery is possible and typical but a race, not a guaranteed save"
+   }
+  ]
+ },
+ "sim_coverage": {
+  "implemented_in_sim": [
+   "reasons engine",
+   "4-layer trade resolution",
+   "all three contagion channels",
+   "trust",
+   "relapse + hysteresis",
+   "danger + warnings + death",
+   "safety valve",
+   "secret people",
+   "promises/betrayal",
+   "storyteller deck",
+   "endings + carry-over",
+   "city generation",
+   "morning report generation",
+   "all 6 bots"
+  ],
+  "abstracted": [
+   "shop upgrades (coin costs/effects)",
+   "dialogue text and tags",
+   "walking/map",
+   "art, audio, palette",
+   "tutorial flavor text"
+  ],
+  "reason": "sim.py proves the loop math is playable; presentation systems are specified in the GDD and JSON but do not affect the math."
+ },
+ "ui_readability": {
+  "why_list": "Tap a person: header shows name, role, district. Body lists their active reasons in plain language with signs and remaining days, strongest first, e.g. 'You overcharged me +8 (2d left)', '3 of 4 neighbors greedy +10 (1d)', 'Fair deal from you -7 (4d)'. Locked behind trust: below 25 trust shows '???'; at 25+ shows a fuzzy estimate (calm/uneasy/greedy) and the top 2 reasons; at 60+ shows everything plus their true tip threshold and any secret hint.",
+  "morning_report": "Plain-language summary every morning, generated from diffs: who tipped, who recovered, biggest movers, heat change, gossip themes, event, warning stage changes. Example: 'Day 12. The market tipped: 4 of 6 stalls now greedy. Prices rose again (heat 68). Old Cuttle told three people you got rich. Your danger: stares and whispers.'",
+  "meters": "City greed and player greed always visible (bar + number). Individual greed hidden until trust. Danger never shown as a number, only warning stage banners."
+ },
+ "dialogue_tags": {
+  "schema": {
+   "topic": "price|supply|status|debt|secret|rumor|weather|greeting",
+   "tone": "honest|kind|flattering|threatening|neutral",
+   "intent": "heal|exploit|probe|protect|promise|betray",
+   "item": "goods|favor|secret|time|none",
+   "secret_flag": true
+  },
+  "rule": "The simulation logic reads ONLY tags. Menu choices are pre-tagged lines. Character voice = plain data (formality, greed_vocab, pet_words).",
+  "later_model_plan": "v1.1 ships an on-device small model: (1) free text -> tag classifier (the same tags), (2) tag -> line generator that rewrites in each character's voice, (3) if slow or low-confidence, fall back to the menu choices. Character memory (trust, reasons, secrets, promise state) stays plain data either way.",
+  "example": {
+   "menu_choice": "'Fair price, same as always. Bread keeps well, you know.'",
+   "tags": {
+    "topic": "price",
+    "tone": "honest",
+    "intent": "heal",
+    "item": "goods",
+    "secret_flag": false
+   }
+  }
+ },
+ "art_audio": {
+  "palette_bands": [
+   {
+    "city_range": [
+     0,
+     25
+    ],
+    "mood": "hopeful",
+    "palette": "warm pastel dawn, soft shadows"
+   },
+   {
+    "city_range": [
+     25,
+     50
+    ],
+    "mood": "ordinary",
+    "palette": "amber daylight"
+   },
+   {
+    "city_range": [
+     50,
+     75
+    ],
+    "mood": "tense",
+    "palette": "burnt orange, rust, long hard shadows"
+   },
+   {
+    "city_range": [
+     75,
+     100
+    ],
+    "mood": "dark",
+    "palette": "ashen violet, black water, gold-only highlights"
+   }
+  ],
+  "sprites": "Individual sprite tint follows personal greed; narrow people gain one small warm pixel accent (their 'small want').",
+  "music": "Layered chiptune: a rounds-based market theme loses a layer every 15 city-greed points; below 50 a detuned counter-melody fades in; at valve range only percussion and a single thin lead remain. Healing restores layers, never instantly.",
+  "barks": "Dialogue lines get shorter and crueler with city greed; hubs stop greeting you at warning stage 2.",
+  "scars": "Healed districts keep 1-2 scar pixels in tile art (healing is never permanent, visually).",
+  "sfx": "Coin SFX pitch rises with player greed; at stage 3 danger, night ambience gains a crowd murmur."
+ },
+ "metaprogression": {
+  "wall_of_owners": true,
+  "trinkets": [
+   {
+    "from": "healer",
+    "item": "Fenn's Scale",
+    "effect": "see fair prices"
+   },
+   {
+    "from": "tycoon",
+    "item": "Iron Key",
+    "effect": "back room free on arrival"
+   },
+   {
+    "from": "fallen_healer",
+    "item": "Gilded Mirror",
+    "effect": "see your own greed reasons"
+   },
+   {
+    "from": "doom_killed",
+    "item": "Heir's Ledger",
+    "effect": "heir starts with ledger read"
+   }
+  ],
+  "goal": "Fill the wall of owners: one portrait per run, all four endings, across many cities."
+ },
+ "decisions_log_summary": "Full decisions log lives in GDD.md section 12. Every entry is labeled LOCKED (notes 1-19), ADOPTED / MODIFIED / REJECTED (notes 20), or NEW DECISION (notes 21 + design completion)."
+}
